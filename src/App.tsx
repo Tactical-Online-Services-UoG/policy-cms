@@ -2,22 +2,33 @@ import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import universityLogo from '/assets/University-of-Guyana-Logo.png'
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { FiMenu, FiSearch, FiX } from 'react-icons/fi'
 import axios from 'axios'
 import AboutPage from '@/pages/about'
 import Suggest from '@/components/element/suggest'
+import ResultPage from '@/components/element/result'
 
 const API_HOST = (import.meta.env.VITE_API_HOST ?? '').replace(/\/$/, '')
 const SEARCH_ENDPOINT = '/server/api/discover/search/objects'
 
 function HomePage() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [apiResponse, setApiResponse] = useState<Record<string, unknown> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [requestError, setRequestError] = useState<string | null>(null)
 
-  const handleSearch = () => {}
+  const handleSearch = () => {
+    const query = searchQuery.trim()
+    if (!query) return
+
+    const params = new URLSearchParams({
+      q: query,
+      page: '1',
+    })
+    navigate(`/results?${params.toString()}`)
+  }
 
   useEffect(() => {
     const query = searchQuery.trim()
@@ -74,7 +85,7 @@ function HomePage() {
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      return
+      handleSearch()
     }
   }
 
@@ -125,97 +136,104 @@ function HomePage() {
 }
 
 function App() {
+  const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const isResultsPage = location.pathname === '/results'
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header with Logo */}
-      <header className="fixed top-0 left-0 right-0 z-50 w-full py-1 px-4 border-b border-border/60 bg-background/50 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <img
-            src={universityLogo}
-            alt="University of Guyana"
-            className="h-16 object-contain"
-          />
-          <div className="hidden md:flex items-center gap-4 font-medium text-muted-foreground">
-            <Link to="/" className="hover:text-primary transition-colors">
-              Home
-            </Link>
-            <Link to="/about" className="hover:text-primary transition-colors">
-              About
-            </Link>
-            <a
-              href="https://www.uog.edu.gy"
-              className="hover:text-primary transition-colors"
-              target="_blank"
-              rel="noreferrer"
-            >
-              UG Website
-            </a>
-          </div>
-          <button
-            type="button"
-            className="md:hidden inline-flex items-center justify-center rounded-md border border-border p-2 text-muted-foreground hover:text-primary hover:border-primary transition-colors"
-            aria-label="Toggle menu"
-            aria-expanded={isMobileMenuOpen}
-            onClick={() => setIsMobileMenuOpen((open) => !open)}
-          >
-            {isMobileMenuOpen ? (
-              <FiX className="h-5 w-5" />
-            ) : (
-              <FiMenu className="h-5 w-5" />
-            )}
-          </button>
-        </div>
-        {isMobileMenuOpen && (
-          <div className="max-w-4xl mx-auto md:hidden pb-3">
-            <nav className="rounded-xl border border-border bg-card p-3 flex flex-col gap-1 text-muted-foreground font-medium">
-              <Link
-                to="/"
-                className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
+      {!isResultsPage && (
+        <header className="fixed top-0 left-0 right-0 z-50 w-full py-1 px-4 border-b border-border/60 bg-background/50 backdrop-blur-md">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <img
+              src={universityLogo}
+              alt="University of Guyana"
+              className="h-16 object-contain cursor-pointer"
+            />
+            <div className="hidden md:flex items-center gap-4 font-medium text-muted-foreground">
+              <Link to="/" className="hover:text-primary transition-colors">
                 Home
               </Link>
-              <Link
-                to="/about"
-                className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
+              <Link to="/about" className="hover:text-primary transition-colors">
                 About
               </Link>
               <a
                 href="https://www.uog.edu.gy"
-                className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                className="hover:text-primary transition-colors"
                 target="_blank"
                 rel="noreferrer"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 UG Website
               </a>
-            </nav>
+            </div>
+            <button
+              type="button"
+              className="md:hidden inline-flex items-center justify-center rounded-md border border-border p-2 text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+              aria-label="Toggle menu"
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+            >
+              {isMobileMenuOpen ? (
+                <FiX className="h-5 w-5" />
+              ) : (
+                <FiMenu className="h-5 w-5" />
+              )}
+            </button>
           </div>
-        )}
-      </header>
+          {isMobileMenuOpen && (
+            <div className="max-w-4xl mx-auto md:hidden pb-3">
+              <nav className="rounded-xl border border-border bg-card p-3 flex flex-col gap-1 text-muted-foreground font-medium">
+                <Link
+                  to="/"
+                  className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/about"
+                  className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  About
+                </Link>
+                <a
+                  href="https://www.uog.edu.gy"
+                  className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  UG Website
+                </a>
+              </nav>
+            </div>
+          )}
+        </header>
+      )}
 
       {/* Main Search Area */}
-      <main className="flex-1 flex items-start justify-center px-4 py-12 mt-16">
+      <main className={isResultsPage ? 'flex-1' : 'flex-1 flex items-start justify-center px-4 py-12 mt-16'}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/results" element={<ResultPage />} />
         </Routes>
       </main>
 
-      <footer className="w-full py-4 px-4 border-t border-border/60">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-sm text-muted-foreground/80">
-            &copy; 2026 University of Guyana. All rights reserved.
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground/60">
-            Managed and Maintained by IGRIS.
-          </p>
-        </div>
-      </footer>
+      {!isResultsPage && (
+        <footer className="w-full py-4 px-4 border-t border-border/60">
+          <div className="max-w-7xl mx-auto text-center">
+            <p className="text-sm text-muted-foreground/80">
+              &copy; 2026 University of Guyana. All rights reserved.
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Managed and Maintained by IGRIS.
+            </p>
+          </div>
+        </footer>
+      )}
     </div>
   )
 }

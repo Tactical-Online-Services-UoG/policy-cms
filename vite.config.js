@@ -7,7 +7,11 @@ export default defineConfig({
     server: {
         host: true, // Listen on all addresses
         allowedHosts: ['policy.nickelcy.com'],
-        hmr: false,
+        hmr: {
+            protocol: 'wss',
+            host: 'policy.nickelcy.com',
+            clientPort: 443,
+        },
     },
     resolve: {
         alias: {
