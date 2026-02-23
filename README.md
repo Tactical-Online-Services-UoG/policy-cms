@@ -6,6 +6,14 @@ A modern, custom UI interface that enables powerful search capabilities for poli
 
 The Policy CMS is a frontend application built with React and Vite that interfaces with a DSpace 9 backend to provide an intuitive search experience for university policies. The system allows staff to curate both public and private policies, with the public policies being accessible through this custom search interface.
 
+## About the Developer
+
+This project is also a personal learning and growth journey.
+
+I am **Nickelcy Francois**, a developer intern, and this work reflects my focus on building useful tools that are clear and accessible for everyday users.
+
+If you want to learn more about me, visit: **https://nicklecy.com**
+
 ## Architecture
 
 ### Backend

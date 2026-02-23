@@ -1,29 +1,226 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import universityLogo from '/assets/University-of-Guyana-Logo.png'
+import { Link, Route, Routes } from 'react-router-dom'
+import { FiMenu, FiSearch, FiX } from 'react-icons/fi'
+import axios from 'axios'
+import AboutPage from '@/pages/about'
 
-function App() {
-  const [count, setCount] = useState<number>(0)
+const API_HOST = (import.meta.env.VITE_API_HOST ?? '').replace(/\/$/, '')
+const SEARCH_ENDPOINT = '/server/api/discover/search/objects'
+
+function HomePage() {
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [apiResponse, setApiResponse] = useState<Record<string, unknown> | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [requestError, setRequestError] = useState<string | null>(null)
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      // TODO: Implement search functionality
+      console.log('Searching for:', searchQuery)
+    }
+  }
+
+  useEffect(() => {
+    const query = searchQuery.trim()
+
+    if (!query) {
+      setApiResponse(null)
+      setRequestError(null)
+      setIsLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+
+    const fetchSearchResults = async () => {
+      setIsLoading(true)
+      setRequestError(null)
+
+      try {
+        if (!API_HOST) {
+          setRequestError('API host is not configured.')
+          return
+        }
+
+        const response = await axios.get(`${API_HOST}${SEARCH_ENDPOINT}`, {
+          params: {
+            query,
+            size: 5,
+            sort: 'score,DESC',
+          },
+          signal: controller.signal,
+        })
+        setApiResponse(response.data)
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
+          return
+        }
+        setRequestError('Could not fetch search results.')
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchSearchResults()
+
+    return () => controller.abort()
+  }, [searchQuery])
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-8">
-      <div className="max-w-2xl w-full">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">
-          Policy CMS
+    <div className="w-full max-w-2xl space-y-8">
+      {/* Title */}
+      <div className="text-center space-y-2">
+        <h1 className="text-5xl font-normal text-foreground">
+          <span className="text-primary">Policy</span>{' '}
+          <span className="text-secondary">Search</span>
         </h1>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <button
-            onClick={() => setCount((count) => count + 1)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+        <p className="text-muted-foreground">Search University of Guyana policies</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <div className="flex items-center gap-2 border border-input rounded-full bg-background shadow-sm hover:shadow-md transition-shadow focus-within:shadow-md focus-within:ring-2 focus-within:ring-ring">
+          <Input
+            type="text"
+            placeholder="Search policies..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="flex-1 border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 h-14 text-base px-6"
+          />
+          <Button
+            onClick={handleSearch}
+            className="rounded-full h-10 w-10 p-0 mr-2"
+            variant="ghost"
+            aria-label="Search"
           >
-            count is {count}
+            <FiSearch className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Search Results */}
+      <div className="ml-10 flex flex-col gap-8">
+        <p className="">
+          {searchQuery ?  <span className="text-muted-foreground">{searchQuery} - Search Repository</span> : <span></span>}
+         </p>
+        {isLoading && (
+          <p className="text-sm text-muted-foreground">Fetching results...</p>
+        )}
+        {requestError && <p className="text-sm text-destructive">{requestError}</p>}
+        {apiResponse !== null && !isLoading && !requestError && (
+          <pre className="max-h-72 overflow-auto rounded-md border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+            {JSON.stringify(apiResponse, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header with Logo */}
+      <header className="fixed top-0 left-0 right-0 z-50 w-full py-1 px-4 border-b border-border/60 bg-background/50 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <img
+            src={universityLogo}
+            alt="University of Guyana"
+            className="h-16 object-contain"
+          />
+          <div className="hidden md:flex items-center gap-4 font-medium text-muted-foreground">
+            <Link to="/" className="hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link to="/about" className="hover:text-primary transition-colors">
+              About
+            </Link>
+            <a
+              href="https://www.uog.edu.gy"
+              className="hover:text-primary transition-colors"
+              target="_blank"
+              rel="noreferrer"
+            >
+              UG Website
+            </a>
+          </div>
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center justify-center rounded-md border border-border p-2 text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+            aria-label="Toggle menu"
+            aria-expanded={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+          >
+            {isMobileMenuOpen ? (
+              <FiX className="h-5 w-5" />
+            ) : (
+              <FiMenu className="h-5 w-5" />
+            )}
           </button>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">
-            Edit <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">src/App.tsx</code> and save to test HMR
+        </div>
+        {isMobileMenuOpen && (
+          <div className="max-w-4xl mx-auto md:hidden pb-3">
+            <nav className="rounded-xl border border-border bg-card p-3 flex flex-col gap-1 text-muted-foreground font-medium">
+              <Link
+                to="/"
+                className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                to="/about"
+                className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About
+              </Link>
+              <a
+                href="https://www.uog.edu.gy"
+                className="px-3 py-2 rounded-md hover:bg-muted hover:text-primary transition-colors"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                UG Website
+              </a>
+            </nav>
+          </div>
+        )}
+      </header>
+
+      {/* Main Search Area */}
+      <main className="flex-1 flex items-start justify-center px-4 py-12 mt-16">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+        </Routes>
+      </main>
+
+      <footer className="w-full py-4 px-4 border-t border-border/60">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-sm text-muted-foreground/80">
+            &copy; 2026 University of Guyana. All rights reserved.
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground/60">
+            Managed and Maintained by IGRIS.
           </p>
         </div>
-        <p className="text-center mt-6 text-gray-500 dark:text-gray-400">
-          Tailwind CSS is now configured and ready to use!
-        </p>
-      </div>
+      </footer>
     </div>
   )
 }
